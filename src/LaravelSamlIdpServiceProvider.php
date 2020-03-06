@@ -10,6 +10,8 @@ namespace CodeGreenCreative\SamlIdp;
 
 use CodeGreenCreative\SamlIdp\Console\CreateCertificate;
 use CodeGreenCreative\SamlIdp\Console\CreateServiceProvider;
+use CodeGreenCreative\SamlIdp\Contracts\SpProviderContract;
+use CodeGreenCreative\SamlIdp\SpProviders\SpProviderManager;
 use CodeGreenCreative\SamlIdp\Traits\EventMap;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Routing\Router;
@@ -45,6 +47,7 @@ class LaravelSamlIdpServiceProvider extends ServiceProvider
         $this->offerPublishing();
         $this->registerServices();
         $this->registerCommands();
+        $this->registerSpProviders();
     }
 
     /**
@@ -156,5 +159,20 @@ class LaravelSamlIdpServiceProvider extends ServiceProvider
                 CreateServiceProvider::class,
             ]);
         }
+    }
+
+    /**
+     * Register sp providers
+     *
+     * @return void
+     */
+    private function registerSpProviders()
+    {
+        $this->app->singleton(SpProviderManager::class, function ($app) {
+            return new SpProviderManager($app);
+        });
+        $this->app->bind(SpProviderContract::class, function () {
+            return $this->app->make(SpProviderManager::class)->driver();
+        });
     }
 }

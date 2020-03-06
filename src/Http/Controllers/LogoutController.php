@@ -3,6 +3,7 @@
 namespace CodeGreenCreative\SamlIdp\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use CodeGreenCreative\SamlIdp\Contracts\SpProviderContract;
 use CodeGreenCreative\SamlIdp\Jobs\SamlSlo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,7 +14,7 @@ class LogoutController extends Controller
      * [index description]
      * @return [type] [description]
      */
-    public function index(Request $request)
+    public function index(Request $request, SpProviderContract $spProvider)
     {
         $slo_redirect = $request->session()->get('saml.slo_redirect');
         if (!$slo_redirect) {
@@ -23,7 +24,7 @@ class LogoutController extends Controller
 
         // Need to broadcast to our other SAML apps to log out!
         // Loop through our service providers and "touch" the logout URL's
-        foreach (config('samlidp.sp') as $key => $sp) {
+        foreach ($spProvider->getAllServiceProviders() as $key => $sp) {
             // Check if the service provider supports SLO
             if (! empty($sp['logout']) && ! in_array($key, $request->session()->get('saml.slo', []))) {
                 // Push this SP onto the saml slo array
